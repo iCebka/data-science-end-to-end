@@ -1,0 +1,19 @@
+services:
+
+  python-app:
+    build: .
+    container_name: s8e1
+    # Este es un volumen fisico
+    profiles:
+      - exercise1
+    volumes:
+      - ./data-contenedor:/app/starter/figures
+
+
+  exercise2:
+    build:
+      context: .
+      dockerfile: Dockerfile.exercise2
+    container_name: s8e2
+    volumes:
+      - ./data-contenedor/ejercicio2:/app/plantilla-ejercicio2/figuras
