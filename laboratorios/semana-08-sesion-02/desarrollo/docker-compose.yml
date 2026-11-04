@@ -1,0 +1,24 @@
+services:
+  ejercicio1:
+    build:
+      context: .
+      dockerfile: Dockerfile.ej1
+    container_name: s08e1
+    volumes:
+      - ./output:/app/output
+
+  ejercicio2:
+    build:
+      context: .
+      dockerfile: Dockerfile.ej2
+    container_name: s08e2
+    volumes:
+      - ./output:/app/output
+
+  ejercicio3:
+    build:
+      context: .
+      dockerfile: Dockerfile.ej3
+    container_name: s08e3
+    volumes:
+      - ./output/ejercicio3:/app/output/figures

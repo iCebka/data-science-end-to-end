@@ -1,0 +1,10 @@
+Filas: 450,078
+Jugadores: 37,562
+Distribución target: {0: 388472, 1: 61606}
+Con al menos un partido en 180d: 146,094 (32.46%)
+Con al menos un partido en 365d: 165,497 (36.77%)
+Sin edad: 0
+Sin variación previa: 94,109
+IMPORTANTE: eliminar PLAYER_ID y VALUATION_DATE de X; usar la fecha para partición temporal.
+No incorporar las columnas FECHA_VALUACION_FUTURA, VALOR_FUTURO_EUR, PROPORCION_VALOR, VARIACION_PCT o N_VALUACIONES_HORIZONTE como X.
+La ausencia de partidos en Gold no prueba ausencia real de actividad.
