@@ -36,3 +36,13 @@ derby.log
 
 # Material reemplazado (no se sube)
 _to_delete/
+
+# Datasets Gold exportados
+laboratorios/semana-08-sesion-02/desarrollo/plantilla-eda/our_dataset/*.csv
+
+# Resultados CSV generados
+laboratorios/semana-08-sesion-02/desarrollo/plantilla-eda/output/*.csv
+
+# Otros archivos temporales
+__pycache__/
+*.pyc
