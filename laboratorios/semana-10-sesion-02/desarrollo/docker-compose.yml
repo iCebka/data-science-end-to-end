@@ -1,0 +1,16 @@
+services:
+  ejercicio1:
+    build:
+      context: .
+      dockerfile: Dockerfile.ej1
+    container_name: s10e1
+    volumes:
+      - ./output/ejercicio1:/app/output
+
+  ejercicio2:
+    build:
+      context: .
+      dockerfile: Dockerfile.ej2
+    container_name: s10e2
+    volumes:
+      - ./output/ejercicio2:/app/output
