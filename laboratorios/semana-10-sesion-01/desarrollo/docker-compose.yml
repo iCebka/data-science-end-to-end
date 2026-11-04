@@ -1,0 +1,19 @@
+services:
+
+  ejercicio1:
+      build:
+        context: .
+        dockerfile: Dockerfile.ej1
+      container_name: s10w1e1
+      # Este es un volumen fisico
+      volumes:
+        - ./output:/app/output
+
+  ejercicio2:
+      build:
+        context: .
+        dockerfile: Dockerfile.ej2
+      container_name: s10w1e2
+      # Este es un volumen fisico
+      volumes:
+        - ./output:/app/output
