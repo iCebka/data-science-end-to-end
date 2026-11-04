@@ -24,17 +24,17 @@ A partir de la lectura previa:
 
 **Según el artículo, ¿qué es la fuga de información, y por qué un modelo con fuga puede verse excelente en la evaluación y fallar en producción?**
 
-_(tu respuesta)_
+La fuga de información ocurre cuando el modelo utiliza datos que no debería conocer durante el entrenamiento, como información del conjunto de prueba o variables que no estarán disponibles al momento de predecir. Esto puede producir resultados demasiado buenos en la evaluación, porque el modelo aprovecha información que no tendría en condiciones reales. En producción, al no disponer de esa información, su rendimiento puede empeorar considerablemente.
 
 **El artículo describe varias formas en que se produce una fuga. ¿Cuál de ellas viste la sesión pasada con la duración del viaje?**
 
-_(tu respuesta)_
+Vimos un caso de target leakage, porque la duración real del viaje solo se conoce cuando este ha terminado. Si queremos predecir la tarifa antes de realizar el viaje, no podemos utilizar esa duración como una característica del modelo, aunque esté muy relacionada con el precio.
 
 ## Pregunta de apertura
 
-Para escalar la distancia, le restas la media y la divides por la desviación estándar. ¿Con qué viajes calculas esa media: con todos, o solo con los de entrenamiento? ¿Cambia algo?
+**Para escalar la distancia, le restas la media y la divides por la desviación estándar. ¿Con qué viajes calculas esa media: con todos, o solo con los de entrenamiento? ¿Cambia algo?**
 
-_(tu respuesta)_
+La media y la desviación estándar deben calcularse solo con los viajes de entrenamiento. Después, usamos esos mismos valores para escalar los datos de prueba. Si calculamos las estadísticas con todos los viajes, estaríamos incorporando información del conjunto de prueba al entrenamiento. Esto puede afectar la evaluación, aunque la diferencia en los resultados sea pequeña.
 
 ## Ejercicio 1: encontrar y corregir la fuga
 
@@ -47,33 +47,48 @@ python3 ejercicio1_fuga.py
 
 **Respuesta 1, antes de ver la solución:** en la versión del compañero, ¿en qué línea entra el conjunto de prueba al entrenamiento? ¿Qué número de la salida lo delata?
 
-_(tu respuesta)_
+La fuga ocurre en la línea X_preparado = escalador.fit_transform(imputador.fit_transform(X)), porque el imputador y el escalador calculan sus estadísticas usando todo el dataset antes de dividirlo. El número que lo delata es 14875 en las filas que vio el escalador, cuando debería haber visto solo las 11900 filas de entrenamiento.
 
 **Respuesta 2 (TODO 1 y 3):** sin resolver, la versión correcta dice que tiene 2975 filas de prueba. ¿Qué está midiendo ese error, si prueba y entrenamiento son las mismas filas?
 
-_(tu respuesta)_
+Está midiendo el error sobre los mismos datos utilizados para entrenar el modelo. Por lo tanto, es un error de entrenamiento, aunque aparezca como error de prueba. No permite evaluar correctamente qué tan bien funcionaría el modelo con datos nuevos.
 
 **Respuesta 3:** ¿cuánto esperas que cambie el error absoluto medio en prueba al corregir la fuga? Si casi no cambia, ¿significa que no había fuga?
 
-_(tu respuesta)_
+Esperaría que el error cambie poco, porque las estadísticas de entrenamiento probablemente sean similares a las del dataset completo. Sin embargo, que el error casi no cambie no significa que no existiera fuga. El problema está en haber utilizado información del conjunto de prueba para preparar los datos, independientemente de cuánto afecte al resultado.
 
 **Lo que confirmó la salida, TODO por TODO:**
 
-_(anota las filas que vio cada escalador y los dos errores)_
+```
+s9w2e1  | Version del companero
+s9w2e1  | Filas que vio el escalador: 2975.0
+s9w2e1  | Media de distancia usada para escalar: 8.5034
+s9w2e1  | Error absoluto medio en prueba: 2.5375
+s9w2e1  | 
+s9w2e1  | Version correcta
+s9w2e1  | Filas que vio el escalador: 2380.0
+s9w2e1  | Media de distancia usada para escalar: 0.0076
+s9w2e1  | Filas de prueba: 595
+s9w2e1  | Error absoluto medio en prueba: 2.5375
+s9w2e1 exited with code 0
+
+```
+
+El escalador del compañero utilizó las 2975 filas del dataset, mientras que el de la versión corregida utilizó 2380 filas de entrenamiento y dejó 595 para prueba. Sin embargo, en el TODO 1 se dividió X_preparado en lugar de X, por lo que los datos ya estaban imputados y escalados antes de la división. Esto explica que la media de distancia del segundo escalador sea 0.0076 en lugar de 8.5034. Ambos modelos obtuvieron un MAE de 2.5375, pero la fuga todavía no está completamente corregida. Para solucionarla, el TODO 1 debe dividir X directamente, de modo que el pipeline aprenda las estadísticas únicamente con entrenamiento.
 
 ## Durante el ConcepTest
 
 **Tu voto, antes de discutir en pareja** (A, B, C o D):
 
-_(tu voto)_
+ACTIVIDAD NO REALIZADA EN CLASE.
 
 **Tu razonamiento:**
 
-_(tu respuesta)_
+ACTIVIDAD NO REALIZADA EN CLASE.
 
 **Después de discutir en pareja, ¿cambiaste de voto? ¿Por qué?**
 
-_(tu respuesta)_
+ACTIVIDAD NO REALIZADA EN CLASE.
 
 ## Ejercicio 2: el pipeline completo
 
@@ -83,17 +98,32 @@ Solo o en pareja. Archivo: [`starter/ejercicio2_pipeline.py`](./starter/ejercici
 python3 ejercicio2_pipeline.py
 ```
 
+```
+s9w2e2  | Columnas despues de preparar: 25
+s9w2e2  | Medianas aprendidas: [6.94 1.  ]
+s9w2e2  | Medianas de entrenamiento: [6.94 1.  ]
+s9w2e2  | Medianas de todo el dataset: [6.93 1.  ]
+s9w2e2  | 
+s9w2e2  | Comprobacion
+s9w2e2  | TODO 1: OK
+s9w2e2  | TODO 2: OK
+s9w2e2  | TODO 3: OK
+s9w2e2  | TODO 4: OK
+s9w2e2  | TODO 5: OK
+s9w2e2 exited with code 0
+```
+
 **Respuesta 1:** ¿cuántas columnas quedan después de preparar los datos? Explica de dónde sale ese número a partir de los tres grupos de columnas.
 
-_(tu respuesta)_
+Quedan 25 columnas: 2 numéricas (distancia_km y pasajeros), 5 que ya estaban listas y 18 generadas al aplicar One-Hot Encoding a las 3 variables categóricas. Las numéricas se imputan y escalan, las categóricas se convierten en columnas binarias y las demás pasan sin cambios.
 
 **Respuesta 2:** ¿las medianas que aprendió el imputador coinciden con las de entrenamiento o con las de todo el dataset? ¿Qué demuestra eso?
 
-_(tu respuesta)_
+Coinciden con las de entrenamiento: 6.94 para distancia y 1 para pasajeros. En cambio, la mediana de distancia del dataset completo es 6.93. Esto demuestra que el imputador aprendió sus estadísticas únicamente con los datos de entrenamiento, evitando la fuga de información.
 
 **Respuesta 3:** ¿qué le pasa al viaje desde el Bronx? ¿Qué habría pasado con `pd.get_dummies` aplicado por separado a ese viaje?
 
-_(tu respuesta)_
+El pipeline procesa el viaje sin errores. Como Bronx no apareció en entrenamiento, todas las columnas correspondientes a la zona de origen quedan en 0. Si aplicáramos pd.get_dummies por separado, se crearía una columna para Bronx y faltarían las columnas de otras zonas, generando una estructura diferente a la que espera el modelo.
 
 ## Ejercicio 3: el pipeline de tu proyecto
 
