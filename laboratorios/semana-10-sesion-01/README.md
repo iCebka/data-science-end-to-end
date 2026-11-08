@@ -178,19 +178,259 @@ Una fila por modelo, con la métrica de tu proyecto en entrenamiento y en prueba
 
 **¿Cuál es tu línea base, y por qué esa y no otra?**
 
-_(tu respuesta)_
+Utilizamos `DummyClassifier(strategy="most_frequent")` como línea base, porque nuestro problema es de clasificación binaria. Este modelo siempre predice la clase más frecuente del entrenamiento, que corresponde a los jugadores que no presentan una depreciación de al menos el 40%.
+
+La línea base obtuvo una balanced accuracy de 0,5000 y un F1 de 0,0000, porque no identifica ninguna depreciación. Nos sirve como referencia para comprobar si los modelos que utilizan las características de los jugadores realmente mejoran la clasificación.
 
 **¿Alguno de tus modelos se sobreajusta? Muestra la evidencia con números de tu tabla.**
 
-_(tu respuesta)_
+Los dos modelos entrenados presentan un rendimiento ligeramente superior en entrenamiento, pero las diferencias son pequeñas.
+
+La regresión logística obtuvo una balanced accuracy de 0,6865 en entrenamiento y 0,6796 en prueba, con una brecha de 0,0069. Gradient Boosting obtuvo 0,7065 en entrenamiento y 0,6975 en prueba, con una brecha de 0,0089.
+
+También observamos diferencias pequeñas en F1: de 0,3809 a 0,3777 para la regresión logística y de 0,4001 a 0,3959 para Gradient Boosting.
+
+Por tanto, no encontramos evidencia de un sobreajuste importante en estos modelos. Ambos mantienen un rendimiento relativamente similar al evaluarse sobre observaciones posteriores a las utilizadas para entrenar.
 
 **¿Qué regularización aplicaste (o por qué no hizo falta), y qué cambió en la tabla?**
 
-_(tu respuesta)_
+En la regresión logística utilizamos regularización L2 con C=1.0, que penaliza los coeficientes grandes para reducir la complejidad del modelo.
+
+En Gradient Boosting limitamos el número máximo de hojas de cada árbol a 15, utilizamos una tasa de aprendizaje de 0,08 y aplicamos regularización L2 con l2_regularization=1.0.
+
+Con estas configuraciones obtuvimos brechas pequeñas entre entrenamiento y prueba: 0,0069 en la regresión logística y 0,0089 en Gradient Boosting. Esto es compatible con una generalización razonable, aunque no podemos atribuir directamente esos resultados a la regularización porque todavía no hemos comparado versiones sin estas restricciones.
 
 **¿Cuánto mejora tu mejor modelo a la línea base?**
 
-_(tu respuesta)_
+El mejor modelo fue Gradient Boosting, con una balanced accuracy de 0,6975 en prueba, frente al 0,5000 de la línea base. Esto representa una mejora de 0,1975, es decir, 19,75 puntos porcentuales.
+
+Además, obtuvo un F1 de 0,3959 y un recall de 0,6747, mientras que la línea base obtuvo cero en ambas métricas.
+
+Aunque el ensamblaje supera claramente a la línea base, su precision de 0,2801 muestra que todavía produce numerosos falsos positivos. Por tanto, el siguiente paso sería estudiar el equilibrio entre precision y recall antes de utilizarlo para predicciones reales.
+
+```python
+"""Ejercicio 3: primeros modelos de depreciacion de futbolistas."""
+
+import os
+import time
+
+import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.dummy import DummyClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    balanced_accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+)
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+
+# Dataset generado en la Semana 9, Sesion 1.
+datos = pd.read_csv("features_proyecto.csv")
+
+OBJETIVO = "TARGET_DEPRECIACION_40"
+
+NUMERICAS = [
+    "EDAD_ANIOS",
+    "HEIGHT_IN_CM",
+    "MARKET_VALUE_IN_EUR",
+    "VALOR_PREVIO_12M_EUR",
+    "VARIACION_PREVIA_12M_PCT",
+    "DESFASE_PREVIO_12M_DIAS",
+    "PARTIDOS_180D",
+    "MINUTES_PLAYED_180D",
+    "GOALS_180D",
+    "ASSISTS_180D",
+    "PARTIDOS_365D",
+    "MINUTES_PLAYED_365D",
+    "GOALS_365D",
+    "ASSISTS_365D",
+    "CAIDA_PREVIA_20",
+]
+
+CATEGORICAS = [
+    "FOOT",
+    "POSITION",
+    "SUB_POSITION",
+    "COMPETITION_ID",
+]
+
+YA_LISTAS = [
+    "ES_MAYOR_30",
+    "TIENE_PARTIDOS_180D",
+    "TIENE_PARTIDOS_365D",
+]
+
+# Permitir que el imputador procese los valores faltantes.
+datos["CAIDA_PREVIA_20"] = datos["CAIDA_PREVIA_20"].astype(float)
+
+X = datos[NUMERICAS + CATEGORICAS + YA_LISTAS]
+y = datos[OBJETIVO]
+
+# Misma division temporal que en la Semana 9, Sesion 2.
+fechas = pd.to_datetime(datos["VALUATION_DATE"])
+
+fecha_corte = fechas.quantile(0.8)
+separacion = pd.Timedelta(days=430)
+
+entrenamiento = fechas < fecha_corte - separacion
+prueba = fechas >= fecha_corte
+
+X_ent = X.loc[entrenamiento]
+X_prueba = X.loc[prueba]
+
+y_ent = y.loc[entrenamiento]
+y_prueba = y.loc[prueba]
+
+print("Fecha de corte:", fecha_corte.date())
+print("Ultima fecha permitida para entrenamiento:",
+      (fecha_corte - separacion).date())
+print("Filas de entrenamiento:", len(X_ent))
+print("Filas de prueba:", len(X_prueba))
+print("Filas reservadas:",
+      len(datos) - len(X_ent) - len(X_prueba))
+
+
+# Preparacion de la Semana 9.
+def preparacion():
+    return ColumnTransformer([
+        ("numericas", Pipeline([
+            ("imputar", SimpleImputer(
+                strategy="median",
+                add_indicator=True
+            )),
+            ("escalar", StandardScaler()),
+        ]), NUMERICAS),
+
+        ("categoricas", Pipeline([
+            ("imputar", SimpleImputer(strategy="most_frequent")),
+            ("codificar", OneHotEncoder(
+                handle_unknown="ignore",
+                sparse_output=False
+            )),
+        ]), CATEGORICAS),
+
+        ("ya_listas", "passthrough", YA_LISTAS),
+    ])
+
+
+resultados = []
+
+
+def evaluar(nombre, modelo):
+    pipeline = Pipeline([
+        ("preparar", preparacion()),
+        ("modelo", modelo),
+    ])
+
+    inicio = time.perf_counter()
+    pipeline.fit(X_ent, y_ent)
+    segundos = time.perf_counter() - inicio
+
+    pred_ent = pipeline.predict(X_ent)
+    pred_prueba = pipeline.predict(X_prueba)
+
+    bal_ent = balanced_accuracy_score(y_ent, pred_ent)
+    bal_prueba = balanced_accuracy_score(y_prueba, pred_prueba)
+
+    f1_ent = f1_score(y_ent, pred_ent, zero_division=0)
+    f1_prueba = f1_score(y_prueba, pred_prueba, zero_division=0)
+
+    precision_prueba = precision_score(
+        y_prueba, pred_prueba, zero_division=0
+    )
+    recall_prueba = recall_score(
+        y_prueba, pred_prueba, zero_division=0
+    )
+
+    resultados.append({
+        "modelo": nombre,
+        "balanced_acc_entrenamiento": round(bal_ent, 4),
+        "balanced_acc_prueba": round(bal_prueba, 4),
+        "brecha": round(bal_ent - bal_prueba, 4),
+        "f1_entrenamiento": round(f1_ent, 4),
+        "f1_prueba": round(f1_prueba, 4),
+        "precision_prueba": round(precision_prueba, 4),
+        "recall_prueba": round(recall_prueba, 4),
+        "segundos": round(segundos, 3),
+    })
+
+    print(
+        f"{nombre:24s} "
+        f"entrenamiento {bal_ent:.4f}   "
+        f"prueba {bal_prueba:.4f}   "
+        f"F1 prueba {f1_prueba:.4f}   "
+        f"precision {precision_prueba:.4f}   "
+        f"recall {recall_prueba:.4f}"
+    )
+
+    return pipeline
+
+
+# Modelo 1: linea base.
+linea_base = DummyClassifier(strategy="most_frequent")
+evaluar("linea base", linea_base)
+
+
+# Modelo 2: regresion logistica con regularizacion L2.
+logistica = LogisticRegression(
+    C=1.0,
+    class_weight="balanced",
+    max_iter=500,
+    random_state=42,
+)   
+evaluar("regresion logistica", logistica)
+
+
+# Modelo 3: ensamblaje con boosting.
+boosting = HistGradientBoostingClassifier(
+    max_iter=100,
+    max_leaf_nodes=15,
+    learning_rate=0.08,
+    l2_regularization=1.0,
+    class_weight="balanced",
+    random_state=42,
+)
+evaluar("gradient boosting", boosting)
+
+
+# Guardar resultados.
+tabla = pd.DataFrame(resultados)
+
+os.makedirs("output/ejercicio3", exist_ok=True)
+tabla.to_csv("output/ejercicio3/resultados_proyecto.csv", index=False)
+
+print()
+print(tabla.to_string(index=False))
+
+mejor = tabla.loc[tabla["balanced_acc_prueba"].idxmax(), "modelo"]
+
+print("\nMejor modelo segun balanced accuracy:", mejor)
+```
+
+```
+s10w1e3  | Fecha de corte: 2023-02-09
+s10w1e3  | Ultima fecha permitida para entrenamiento: 2021-12-06
+s10w1e3  | Filas de entrenamiento: 302189
+s10w1e3  | Filas de prueba: 90018
+s10w1e3  | Filas reservadas: 57871
+s10w1e3  | linea base               entrenamiento 0.5000   prueba 0.5000   F1 prueba 0.0000   precision 0.0000   recall 0.0000
+s10w1e3  | regresion logistica      entrenamiento 0.6865   prueba 0.6796   F1 prueba 0.3777   precision 0.2673   recall 0.6438
+s10w1e3  | gradient boosting        entrenamiento 0.7065   prueba 0.6975   F1 prueba 0.3959   precision 0.2801   recall 0.6747
+s10w1e3  | 
+s10w1e3  |              modelo  balanced_acc_entrenamiento  balanced_acc_prueba  brecha  f1_entrenamiento  f1_prueba  precision_prueba  recall_prueba  segundos
+s10w1e3  |          linea base                      0.5000               0.5000  0.0000            0.0000     0.0000            0.0000         0.0000     0.860
+s10w1e3  | regresion logistica                      0.6865               0.6796  0.0069            0.3809     0.3777            0.2673         0.6438     4.722
+s10w1e3  |   gradient boosting                      0.7065               0.6975  0.0089            0.4001     0.3959            0.2801         0.6747    14.269
+s10w1e3  | 
+s10w1e3  | Mejor modelo segun balanced accuracy: gradient boosting
+s10w1e3 exited with code 0
+```
 
 ## Antes de la próxima sesión
 
@@ -198,4 +438,6 @@ _(tu respuesta)_
 
 Para estimar la tarifa de un viaje, podrías entrenar un ensamblaje, entrenar una red neuronal o escribirle a un LLM los datos del viaje y pedirle un número. ¿Qué tendrías que medir de cada opción, además del error, para decidir cuál usar en la app de taxis?
 
-_(tu respuesta)_
+Además del error, mediría el tiempo de entrenamiento y de respuesta, el costo computacional y económico, y los recursos que necesita cada alternativa. También consideraría qué tan fácil es explicar sus predicciones, mantener el modelo y actualizarlo con nuevos datos.
+
+Para una app de taxis es importante obtener estimaciones rápidas, consistentes y económicas. Por eso, si un ensamblaje ofrece un error similar al de una red neuronal o un LLM, pero necesita menos recursos y responde más rápido, probablemente sería la opción más conveniente.
