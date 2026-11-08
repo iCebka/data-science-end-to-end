@@ -424,6 +424,8 @@ La tabla principal fue `fact_player_valuation`, con 655.695 valoraciones corresp
 
 Primero, mediante `analizar_valuaciones_horizonte.py`, buscamos para cada valoración otra del mismo futbolista aproximadamente 12 meses después. Analizamos diferentes tolerancias temporales y escogimos **±65 días**, considerando el equilibrio entre la cantidad de observaciones recuperadas y la distancia respecto al horizonte deseado. Con esta configuración obtuvimos 450.078 observaciones con una valoración futura disponible.
 
+De las 655.695 valoraciones iniciales, 450.078 contaban con una valoración futura válida y pudieron recibir una etiqueta. Las 205.617 observaciones restantes quedaron con `TARGET_DEPRECIACION_40` sin determinar y se separaron del conjunto de entrenamiento. Por tanto, tanto `auditoria_enriquecida.csv` como `modelo_etiquetado.csv` contienen únicamente las 450.078 observaciones etiquetadas.
+
 Después, con `create_targets.py`, construimos la variable binaria `TARGET_DEPRECIACION_40`. Asignamos 1 cuando el valor futuro era al menos un 40% inferior al inicial y 0 en caso contrario. Las observaciones sin una valoración futura suficientemente cercana se conservaron por separado, sin asignarles una categoría artificial.
 
 Finalmente, utilizamos `generar_dataset_modelo_gold.py` para enriquecer las observaciones etiquetadas con información de las otras tablas Gold. Calculamos la edad del futbolista en la fecha de valoración, incorporamos su posición, pie dominante y altura, y recuperamos su variación de valor durante el año anterior. También agregamos los minutos, goles, asistencias y partidos registrados durante los 180 y 365 días anteriores a cada valoración.
@@ -525,4 +527,8 @@ No tener registros de partidos no equivale a haber jugado cero minutos.
 
 La tarifa fija de JFK y la hora del día no existen como columnas del dataset de taxis. ¿Cómo le darías esa información a un modelo?
 
-_(tu respuesta)_
+Podríamos crear nuevas características a partir de las columnas que ya tenemos. Para identificar los viajes con posible tarifa fija de JFK, utilizaríamos las zonas de origen y destino para crear una variable binaria, por ejemplo `es_tarifa_fija`, que indique si el viaje corresponde a una ruta donde se aplica esa tarifa.
+
+Para representar la hora del día, extraeríamos la hora de `fecha_hora_inicio` y podríamos crear otra variable binaria, `es_hora_pico`, que identifique los horarios de mayor demanda.
+
+Así, el modelo podría utilizar esta información para aprender diferencias en las tarifas según el tipo de ruta y el horario, sin depender únicamente de la distancia y la duración.
