@@ -1,0 +1,4 @@
+modelo,balanced_acc_prueba,balanced_acc_10,f1_10,precision_10,recall_10,segundos_entrenamiento
+gradient boosting,0.6975,0.6,0.6,0.6,0.6,18.945
+red neuronal,0.6792,0.6,0.6,0.6,0.6,15.351
+LLM,,0.7,0.6667,0.75,0.6,

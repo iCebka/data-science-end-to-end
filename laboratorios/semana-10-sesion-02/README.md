@@ -143,9 +143,48 @@ Elige 10 filas de tu conjunto de prueba y escribe un prompt con algunas filas de
 
 Una tabla con las tres opciones (métrica, costo, explicabilidad) y un párrafo que diga cuál usarías en tu proyecto y por qué, con los números de tu tabla.
 
-_(tu tabla)_
 
-_(tu decisión)_
+
+|Modelo |Balanced accuracy (10 casos)| Tiempo de entrenamiento |Costo| Explicabilidad|
+|--|--|--|--|--|
+|Gradient Boosting|0,6000|18,95 s|Inferencia local; costo no medido|Permite analizar la importancia de las características|
+|Red neuronal|0,6000|15,35 s|Inferencia local; costo no medido|Más difícil de interpretar directamente|
+|LLM|0,7000|No requiere entrenamiento local|Depende del proveedor; no medido|Puede generar explicaciones, pero no necesariamente reflejan cómo produjo la predicción|
+
+#### Decisión
+
+Para nuestro proyecto elegiríamos Gradient Boosting. Aunque el LLM obtuvo la mayor balanced accuracy en la muestra de diez futbolistas, esa evaluación es demasiado pequeña para concluir que generaliza mejor.
+
+En cambio, Gradient Boosting obtuvo una balanced accuracy de 0,6975 sobre 90.018 observaciones de prueba, superando a la red neuronal, que alcanzó 0,6792. Además, ambos modelos se evaluaron sobre valoraciones posteriores a las utilizadas durante el entrenamiento.
+
+El ensamblaje también permite estudiar la importancia de las variables utilizadas para predecir la depreciación. Aunque todavía necesitamos analizar mejor sus predicciones individuales, consideramos que ofrece una alternativa más adecuada para trabajar con nuestro dataset estructurado.
+
+Por ahora, mantendríamos Gradient Boosting como nuestro mejor modelo y continuaríamos investigando nuevas características, ajustes de hiperparámetros y formas de mejorar su capacidad predictiva.
+
+**Además, esta elección de modelos no es definitiva aun, pues la extensión del dataset es considerable y aun se encuentran oportunidades de sofisticación del dataset final enriquecido con más metricas deportivas y también de los modelos incluyendo más de esta información. Esta iteración es la primera exploración de modelos para acompañar a las clases y los laboratorios trabajados semanalmente.**
+
+```
+s10w2e3  | Fecha de corte: 2023-02-09
+s10w2e3  | Entrenamiento: 302189
+s10w2e3  | Prueba: 90018
+s10w2e3  | gradient boosting    balanced acc prueba 0.6975 balanced acc 10 0.6000 F1 10 0.6000 tiempo 18.94 s
+s10w2e3  | red neuronal         balanced acc prueba 0.6792 balanced acc 10 0.6000 F1 10 0.6000 tiempo 15.35 s
+s10w2e3  | 
+s10w2e3  | Parametros aprendidos por la red: 5377
+s10w2e3  | Iteraciones de la red: 34
+s10w2e3  | 
+s10w2e3  | Prompt generado: output/ejercicio3/prompt_llm.txt
+s10w2e3  | Caracteres: 4748
+s10w2e3  | 
+s10w2e3  | LLM balanced acc 10: 0.7
+s10w2e3  | 
+s10w2e3  | Comparacion:
+s10w2e3  |            modelo  balanced_acc_prueba  balanced_acc_10  f1_10  precision_10  recall_10  segundos_entrenamiento
+s10w2e3  | gradient boosting               0.6975              0.6 0.6000          0.60        0.6                  18.945
+s10w2e3  |      red neuronal               0.6792              0.6 0.6000          0.60        0.6                  15.351
+s10w2e3  |               LLM                  NaN              0.7 0.6667          0.75        0.6                     NaN
+s10w2e3 exited with code 0
+```
 
 ## Antes de la próxima sesión
 
@@ -153,4 +192,8 @@ _(tu decisión)_
 
 Dos compañeros reportan errores distintos para "el mismo" gradient boosting sobre los mismos datos de taxis. ¿Qué tendrías que saber de cada corrida para descubrir por qué no coinciden?
 
-_(tu respuesta)_
+Para descubrir por qué obtuvieron errores diferentes, necesitaríamos conocer la versión del dataset, las transformaciones aplicadas, cómo dividieron los datos en entrenamiento y prueba y qué semilla aleatoria utilizaron.
+
+También revisaríamos la versión del código, los hiperparámetros del Gradient Boosting, las versiones de las librerías y la métrica utilizada para evaluar el error.
+
+Con esta información podríamos reproducir ambas ejecuciones y determinar qué diferencias explican los resultados. Por eso es importante llevar un control de versiones no solo del código, sino también de los datos, la configuración y los modelos entrenados.

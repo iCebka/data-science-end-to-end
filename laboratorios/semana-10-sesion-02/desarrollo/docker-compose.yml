@@ -14,3 +14,12 @@ services:
     container_name: s10e2
     volumes:
       - ./output/ejercicio2:/app/output
+
+  ejercicio3:
+    build:
+      context: .
+      dockerfile: Dockerfile.ej3
+    container_name: s10w2e3
+    volumes:
+      - ./output/ejercicio3:/app/output/ejercicio3
+      - ../../semana-09-sesion-01/desarrollo/output/ejercicio3/features_proyecto.csv:/app/features_proyecto.csv:ro
