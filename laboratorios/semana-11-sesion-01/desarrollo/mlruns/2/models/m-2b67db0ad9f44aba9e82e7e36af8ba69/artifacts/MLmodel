@@ -1,0 +1,25 @@
+artifact_path: /home/satt/icebka/usfq/dmining/ciencia-de-datos/laboratorios/semana-08/data-science-end-to-end/laboratorios/semana-11-sesion-01/desarrollo/mlruns/2/models/m-2b67db0ad9f44aba9e82e7e36af8ba69/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.skops
+    predict_fn: predict
+    python_version: 3.14.10
+  sklearn:
+    code: null
+    pickled_model: model.skops
+    serialization_format: skops
+    sklearn_version: 1.9.1
+    skops_trusted_types:
+    - numpy.dtype
+    - sklearn.tree._tree.Tree
+mlflow_version: 3.18.0
+model_id: m-2b67db0ad9f44aba9e82e7e36af8ba69
+model_size_bytes: 216528
+model_uuid: m-2b67db0ad9f44aba9e82e7e36af8ba69
+prompts: null
+run_id: 99e5c21b213d4c68a26283304ae96583
+utc_time_created: '2026-11-08 05:52:58.252488'
