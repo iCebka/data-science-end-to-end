@@ -26,3 +26,12 @@ services:
       # Este es un volumen fisico
       volumes:
         - ./output:/app/output
+
+  ejercicio3:
+    build:
+      context: .
+      dockerfile: Dockerfile.ej3
+    container_name: s9w1e3
+    volumes:
+      - ./output:/app/output
+      - ../../semana-08-sesion-02/desarrollo/plantilla-eda/output/modelo_etiquetado.csv:/app/modelo_etiquetado.csv

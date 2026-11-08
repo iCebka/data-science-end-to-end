@@ -234,25 +234,83 @@ Usa el mismo archivo de la exploración de la Semana 8 y la plantilla [`plantill
 
 Escribe qué predice tu modelo y en qué momento: qué información existe en ese instante y cuál todavía no.
 
-_(tu respuesta)_
+Nuestro modelo busca predecir si el valor de mercado de un futbolista disminuirá al menos un 40% aproximadamente 12 meses después de una valoración determinada.
+
+La predicción se realiza en la fecha de esa valoración. En ese momento conocemos la edad, posición, altura, pie dominante y valor de mercado actual del jugador. También podemos utilizar sus valoraciones anteriores y las estadísticas deportivas registradas hasta esa fecha.
+
+No conocemos el valor que tendrá el futbolista dentro de 12 meses. Esa información se utiliza únicamente para construir `TARGET_DEPRECIACION_40` durante la preparación del dataset, pero no forma parte de las entradas del modelo. La idea es predecir una potencial depreciación de un 40% recibiendo el estado del jugador en este momento, capturado por la valuación en este momento y datos de juego hasta este momento, en entrenamiento se tiene un set de estados capturados (valuaciones y datos deportivos) cuyo futuro depreciado o no depreciado ya es conocido, esa es la label que vamos a predecir.
 
 ### Paso 2: construye las 2 features (15 minutos)
 
 Completa la plantilla con 2 columnas nuevas, derivadas de las existentes. Al menos una tiene que salir de uno de tus hallazgos de la exploración.
 
-_(el código de cada feature)_
+A partir de los hallazgos de la exploración de la Semana 8, creamos dos características binarias: ES_MAYOR_30, que identifica a los jugadores de 30 años o más, y CAIDA_PREVIA_20, que identifica a quienes habían perdido al menos un 20% de su valor respecto a una valoración histórica anterior.
+
+```python
+A partir de los hallazgos de la exploración de la Semana 8, creamos dos características binarias: ES_MAYOR_30, que identifica a los jugadores de 30 años o más, y CAIDA_PREVIA_20, que identifica a quienes habían perdido al menos un 20% de su valor respecto a una valoración histórica anterior.
+```
+
+Para la segunda característica conservamos los valores faltantes, porque no tener una valoración histórica disponible no significa que el jugador no haya sufrido una caída de valor.
+
+El dataset resultante conserva las 450.078 observaciones y pasa de 24 a 26 columnas.
 
 ### Paso 3: justifica cada feature (5 minutos)
 
 Para cada una: de qué hallazgo o conocimiento del dominio sale, qué evidencia muestra que aporta (una correlación, una diferencia de promedios), y por qué existe en el momento de predecir. Si alguna es categórica, di qué codificación usarías según el modelo que planeas entrenar.
 
-**Feature 1:**
+**Feature 1: ES_MAYOR_30**
 
-_(tu justificación)_
+En la exploración de la Semana 8 encontramos que la frecuencia de depreciaciones aumenta considerablemente con la edad, especialmente a partir de los 30 años. Por ello, creamos una variable binaria que identifica a los jugadores que han alcanzado esa edad.
 
-**Feature 2:**
+Los resultados muestran que, de las 381.866 observaciones correspondientes a jugadores menores de 30 años, el 10,0% presenta una depreciación futura de al menos el 40%. En cambio, entre las 68.212 observaciones de jugadores de 30 años o más, el porcentaje aumenta al 34,5%.
 
-_(tu justificación)_
+Esta diferencia sugiere que la nueva característica podría aportar información al modelo. Además, la edad está disponible en el momento de la predicción, por lo que no introduce información futura. Al ser una variable binaria, puede utilizarse directamente tanto en modelos lineales como en modelos basados en árboles, sin necesidad de codificación one-hot.
+
+**Feature 2: CAIDA_PREVIA_20**
+
+Durante el EDA también encontramos una relación entre la evolución histórica del valor de mercado y la depreciación futura. Los jugadores que ya habían perdido una parte importante de su valor presentaban una mayor frecuencia de nuevas depreciaciones.
+
+Para representar este comportamiento, creamos una variable binaria que indica si el jugador había perdido al menos un 20% de su valor respecto a una valoración histórica cercana a 12 meses antes.
+
+Los resultados muestran tres grupos:
+
+- Sin caída previa de al menos el 20%: 268.774 observaciones, con una tasa de depreciación futura del 11,5%.
+
+- Con caída previa de al menos el 20%: 87.195 observaciones, con una tasa del 27,8%.
+
+- Sin información histórica suficiente: 94.109 observaciones, con una tasa del 6,9%.
+
+La diferencia entre los grupos sugiere que la evolución previa del valor puede aportar información predictiva. También observamos que las filas sin historial suficiente presentan un comportamiento diferente, por lo que no debemos confundir los valores faltantes con la ausencia de depreciación previa.
+
+Esta característica utiliza únicamente información anterior a la fecha de predicción, por lo que no introduce fuga de información. Es binaria y no requiere codificación one-hot. Por ahora conservamos sus valores faltantes y dejaremos su tratamiento para la etapa de preprocesamiento.
+
+
+```
+Attaching to s9w1e3
+s9w1e3  | Depreciacion segun edad:
+s9w1e3  |               count   mean
+s9w1e3  | ES_MAYOR_30               
+s9w1e3  | 0            381866  0.100
+s9w1e3  | 1             68212  0.345
+s9w1e3  | 
+s9w1e3  | Depreciacion segun caida previa:
+s9w1e3  |                   count   mean
+s9w1e3  | CAIDA_PREVIA_20               
+s9w1e3  | 0                268774  0.115
+s9w1e3  | 1                 87195  0.278
+s9w1e3  | <NA>              94109  0.069
+s9w1e3  | 
+s9w1e3  | Primeras filas:
+s9w1e3  |    PLAYER_ID VALUATION_DATE  ...  ES_MAYOR_30  CAIDA_PREVIA_20
+s9w1e3  | 0         10     2004-10-04  ...            0             <NA>
+s9w1e3  | 1         26     2004-10-04  ...            0             <NA>
+s9w1e3  | 2         65     2004-10-04  ...            0             <NA>
+s9w1e3  | 3         77     2004-10-04  ...            0             <NA>
+s9w1e3  | 4        109     2004-10-04  ...            0             <NA>
+s9w1e3  | 
+s9w1e3  | [5 rows x 26 columns]
+s9w1e3 exited with code 0
+```
 
 ## Antes de la próxima sesión
 
@@ -260,4 +318,8 @@ _(tu justificación)_
 
 Para escalar la distancia antes de entrenar, le restas la media y la divides por la desviación estándar. ¿Con qué viajes calculas esa media: con todos, o solo con los de entrenamiento? ¿Cambia algo?
 
-_(tu respuesta)_
+La media y la desviación estándar deben calcularse **únicamente con los viajes del conjunto de entrenamiento**. Después utilizamos esos mismos valores para transformar tanto los datos de entrenamiento como los de prueba.
+
+Si calculamos estas estadísticas utilizando todos los viajes, estaríamos incorporando información del conjunto de prueba durante el preprocesamiento. Esto produciría una fuga de información (*data leakage*) y podría generar una evaluación demasiado optimista del modelo.
+
+Por tanto, primero debemos dividir los datos en entrenamiento y prueba, luego ajustar el escalador con los datos de entrenamiento y finalmente aplicar esa transformación a ambos conjuntos.
