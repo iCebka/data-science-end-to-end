@@ -133,19 +133,80 @@ Usa tu archivo con las 2 features de la sesión pasada y la plantilla [`plantill
 
 Escribe qué columnas son numéricas, cuáles categóricas y cuáles ya están listas, y cuál es el objetivo. Deja fuera toda columna que no exista al momento de predecir.
 
-_(tu clasificación)_
+Utilizamos el dataset generado en la Semana 9, Sesión 1, que contiene 450.078 observaciones y 26 columnas, incluyendo las dos características nuevas: `ES_MAYOR_30` y `CAIDA_PREVIA_20`.
+
+Clasificamos las variables de entrada en tres grupos:
+
+**Numéricas:** edad, altura, valor de mercado actual, valor y variación históricos, desfase de la valoración previa, partidos, minutos, goles y asistencias de los últimos 180 y 365 días, y `CAIDA_PREVIA_20.` Estas columnas se imputan mediante la mediana y se escalan con StandardScaler. También conservamos indicadores de valores faltantes.
+
+**Categóricas:** `FOOT`, `POSITION`, `SUB_POSITION` y `COMPETITION_ID`. Los valores faltantes se imputan mediante la categoría más frecuente y después utilizamos one-hot encoding.
+
+**Ya preparadas:** `ES_MAYOR_30`, `TIENE_PARTIDOS_180D` y `TIENE_PARTIDOS_365D`. Son variables binarias que pasan directamente al conjunto transformado.
+
+La variable objetivo es `TARGET_DEPRECIACION_40`, que indica si el valor de mercado del futbolista disminuyó al menos un 40% aproximadamente 12 meses después.
+
+Excluimos `PLAYER_ID` y `CLUB_ID` como identificadores. Utilizamos `VALUATION_DATE` para realizar la separación temporal, pero no como entrada directa del modelo. Tampoco incluimos ninguna valoración futura entre las características predictoras.
 
 ### Paso 2: decide cómo dividir (5 minutos)
 
 ¿Tu modelo predice el futuro a partir de filas con fecha? Si sí, divide por fecha; si no, al azar. Justifica.
 
-_(tu decisión)_
+Como nuestro modelo busca predecir una depreciación futura a partir de observaciones históricas, decidimos realizar una división cronológica en lugar de utilizar una separación aleatoria.
+
+Escogimos el 9 de febrero de 2023 como fecha de corte, correspondiente aproximadamente al percentil 80 de las fechas de valoración. Utilizamos las observaciones posteriores o iguales a esa fecha como conjunto de prueba.
+
+Además, reservamos un intervalo de 430 días antes del comienzo de prueba, ya que nuestras etiquetas dependen de una valoración futura cercana a 12 meses después, con una tolerancia de ±65 días. Esto evita que el conjunto de entrenamiento utilice resultados que no habrían estado disponibles al comenzar el período de prueba.
+
+Obtuvimos 302.189 observaciones de entrenamiento, 90.018 de prueba y 57.871 observaciones reservadas entre ambos períodos.
 
 ### Paso 3: construye y corre el pipeline (15 minutos)
 
 Completa la plantilla y córrela. Anota la forma de los conjuntos de entrenamiento y prueba ya preparados, y la lista de columnas que produce.
 
-_(lo que imprimió tu pipeline)_
+Construimos un `ColumnTransformer` con tres grupos de variables. Las numéricas pasan por un pipeline de imputación por mediana y escalado, las categóricas se imputan y codifican mediante one-hot encoding, y las binarias ya preparadas se conservan directamente.
+
+Ejecutamos `fit_transform()` únicamente sobre el conjunto de entrenamiento y utilizamos `transform()` para preparar el conjunto de prueba con las mismas transformaciones aprendidas, evitando la fuga de información.
+
+La ejecución produjo los siguientes resultados:
+
+```
+Entrenamiento: (302189, 82)
+Prueba:        (90018, 82)
+```
+
+Las 82 columnas corresponden a 15 variables numéricas, 11 indicadores de valores faltantes, 53 columnas generadas por one-hot encoding y 3 características binarias ya preparadas.
+
+Ambos conjuntos tienen exactamente las mismas columnas, lo que confirma que el pipeline mantiene una representación consistente entre entrenamiento y prueba.
+
+Además, los valores utilizados para imputar y escalar se aprenden únicamente a partir de las observaciones de entrenamiento, sin incorporar información estadística del conjunto de prueba.
+
+```
+s9w2e3  | Fecha de corte: 2023-02-09
+s9w2e3  | Ultima fecha permitida para entrenamiento: 2021-12-06
+s9w2e3  | Filas de entrenamiento: 302189
+s9w2e3  | Filas de prueba: 90018
+s9w2e3  | Filas reservadas entre ambos periodos: 57871
+s9w2e3  | 
+s9w2e3  | Entrenamiento: (302189, 82)
+s9w2e3  | Prueba: (90018, 82)
+s9w2e3  | 
+s9w2e3  | Columnas despues de preparar:
+s9w2e3  | ['numericas__EDAD_ANIOS', 'numericas__HEIGHT_IN_CM', 'numericas__MARKET_VALUE_IN_EUR', 'numericas__VALOR_PREVIO_12M_EUR', 'numericas__VARIACION_PREVIA_12M_PCT', 'numericas__DESFASE_PREVIO_12M_DIAS', 'numericas__PARTIDOS_180D', 'numericas__MINUTES_PLAYED_180D', 'numericas__GOALS_180D', 'numericas__ASSISTS_180D', 'numericas__PARTIDOS_365D', 'numericas__MINUTES_PLAYED_365D', 'numericas__GOALS_365D', 'numericas__ASSISTS_365D', 'numericas__CAIDA_PREVIA_20', 'numericas__missingindicator_HEIGHT_IN_CM', 'numericas__missingindicator_VALOR_PREVIO_12M_EUR', 'numericas__missingindicator_VARIACION_PREVIA_12M_PCT', 'numericas__missingindicator_DESFASE_PREVIO_12M_DIAS', 'numericas__missingindicator_MINUTES_PLAYED_180D', 'numericas__missingindicator_GOALS_180D', 'numericas__missingindicator_ASSISTS_180D', 'numericas__missingindicator_MINUTES_PLAYED_365D', 'numericas__missingindicator_GOALS_365D', 'numericas__missingindicator_ASSISTS_365D', 'numericas__missingindicator_CAIDA_PREVIA_20', 'categoricas__FOOT_both', 'categoricas__FOOT_left', 'categoricas__FOOT_right', 'categoricas__POSITION_Attack', 'categoricas__POSITION_Defender', 'categoricas__POSITION_Goalkeeper', 'categoricas__POSITION_Midfield', 'categoricas__POSITION_Missing', 'categoricas__SUB_POSITION_Attacking Midfield', 'categoricas__SUB_POSITION_Central Midfield', 'categoricas__SUB_POSITION_Centre-Back', 'categoricas__SUB_POSITION_Centre-Forward', 'categoricas__SUB_POSITION_Defensive Midfield', 'categoricas__SUB_POSITION_Goalkeeper', 'categoricas__SUB_POSITION_Left Midfield', 'categoricas__SUB_POSITION_Left Winger', 'categoricas__SUB_POSITION_Left-Back', 'categoricas__SUB_POSITION_Right Midfield', 'categoricas__SUB_POSITION_Right Winger', 'categoricas__SUB_POSITION_Right-Back', 'categoricas__SUB_POSITION_Second Striker', 'categoricas__COMPETITION_ID_A1', 'categoricas__COMPETITION_ID_ARG1', 'categoricas__COMPETITION_ID_AUS1', 'categoricas__COMPETITION_ID_BE1', 'categoricas__COMPETITION_ID_BRA1', 'categoricas__COMPETITION_ID_C1', 'categoricas__COMPETITION_ID_COL1', 'categoricas__COMPETITION_ID_DK1', 'categoricas__COMPETITION_ID_ES1', 'categoricas__COMPETITION_ID_FR1', 'categoricas__COMPETITION_ID_GB1', 'categoricas__COMPETITION_ID_GR1', 'categoricas__COMPETITION_ID_IT1', 'categoricas__COMPETITION_ID_JAP1', 'categoricas__COMPETITION_ID_KR1', 'categoricas__COMPETITION_ID_L1', 'categoricas__COMPETITION_ID_MEX1', 'categoricas__COMPETITION_ID_MLS1', 'categoricas__COMPETITION_ID_NL1', 'categoricas__COMPETITION_ID_NO1', 'categoricas__COMPETITION_ID_PL1', 'categoricas__COMPETITION_ID_PO1', 'categoricas__COMPETITION_ID_RO1', 'categoricas__COMPETITION_ID_RSK1', 'categoricas__COMPETITION_ID_RU1', 'categoricas__COMPETITION_ID_SA1', 'categoricas__COMPETITION_ID_SC1', 'categoricas__COMPETITION_ID_SE1', 'categoricas__COMPETITION_ID_SER1', 'categoricas__COMPETITION_ID_TR1', 'categoricas__COMPETITION_ID_TS1', 'categoricas__COMPETITION_ID_UKR1', 'ya_listas__ES_MAYOR_30', 'ya_listas__TIENE_PARTIDOS_180D', 'ya_listas__TIENE_PARTIDOS_365D']
+s9w2e3  | 
+s9w2e3  | Targets:
+s9w2e3  | Entrenamiento:
+s9w2e3  | TARGET_DEPRECIACION_40
+s9w2e3  | 0    261328
+s9w2e3  | 1     40861
+s9w2e3  | Name: count, dtype: int64
+s9w2e3  | Prueba:
+s9w2e3  | TARGET_DEPRECIACION_40
+s9w2e3  | 0    77516
+s9w2e3  | 1    12502
+s9w2e3  | Name: count, dtype: int64
+s9w2e3 exited with code 0
+
+```
 
 ## Antes de la próxima sesión
 
@@ -153,4 +214,6 @@ _(lo que imprimió tu pipeline)_
 
 Ya tienes los datos listos para entrenar. Si entrenas dos modelos sobre el mismo conjunto y uno da un error mucho menor en entrenamiento que en prueba, ¿qué le está pasando?
 
-_(tu respuesta)_
+Si un modelo obtiene un error mucho menor en entrenamiento que en prueba, probablemente está sufriendo **sobreajuste (*overfitting*)**. Esto significa que aprendió demasiado bien los patrones y particularidades de los datos de entrenamiento, incluyendo posibles ruidos, pero no consigue generalizar igual de bien a observaciones nuevas.
+
+Podríamos intentar corregirlo reduciendo la complejidad del modelo, aplicando regularización o ajustando sus hiperparámetros. También podríamos comparar métodos de ensamblaje, como Random Forest o Gradient Boosting, para evaluar si conseguimos una mejor generalización.
