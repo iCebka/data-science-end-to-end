@@ -16,7 +16,7 @@ python3 -c "import sklearn; print(sklearn.__version__)"
 
 Este laboratorio usa `sparse_output=False` en `OneHotEncoder`, disponible desde scikit-learn 1.2. El `requirements.txt` del repositorio ya fija una versión posterior.
 
-Ten a mano el script de features de tu proyecto de la sesión pasada.
+Ten a mano tu notebook de features de la sesión pasada. Los tres ejercicios de hoy son scripts, no notebooks: un pipeline de preparación es código de producción, que tiene que correr igual cada vez y que otros archivos importan. En el Ejercicio 3, la preparación de tu proyecto pasa del notebook donde la probaste a ese script.
 
 ## Antes de empezar
 
@@ -125,11 +125,19 @@ Coinciden con las de entrenamiento: 6.94 para distancia y 1 para pasajeros. En c
 
 El pipeline procesa el viaje sin errores. Como Bronx no apareció en entrenamiento, todas las columnas correspondientes a la zona de origen quedan en 0. Si aplicáramos pd.get_dummies por separado, se crearía una columna para Bronx y faltarían las columnas de otras zonas, generando una estructura diferente a la que espera el modelo.
 
-## Ejercicio 3: el pipeline de tu proyecto
+## Ejercicio 3: el pipeline de tu proyecto, como script
 
-Usa tu archivo con las 2 features de la sesión pasada y la plantilla [`plantilla-pipeline/pipeline_proyecto.py`](./plantilla-pipeline/pipeline_proyecto.py).
+Copia la plantilla [`plantilla-pipeline/pipeline_proyecto.py`](./plantilla-pipeline/pipeline_proyecto.py) a `psets/proyecto/modelado/`, al lado de tu notebook de features. Desde la próxima sesión, tus notebooks de modelos importan este archivo en vez de copiar su código:
 
-### Paso 1: clasifica tus columnas (5 minutos)
+```python
+from pipeline_proyecto import cargar_y_dividir, construir_preparacion
+```
+
+### Paso 1: pasa tus features a `agregar_features` (5 minutos)
+
+Copia de tu notebook de la sesión pasada solo las líneas que construyen tus 2 features, dentro de la función `agregar_features`. Sin gráficos, sin `print` y sin las celdas que usaste para probar ideas: esas se quedan en el notebook, como evidencia de por qué elegiste cada feature.
+
+### Paso 2: clasifica tus columnas (5 minutos)
 
 Escribe qué columnas son numéricas, cuáles categóricas y cuáles ya están listas, y cuál es el objetivo. Deja fuera toda columna que no exista al momento de predecir.
 
@@ -147,9 +155,9 @@ La variable objetivo es `TARGET_DEPRECIACION_40`, que indica si el valor de merc
 
 Excluimos `PLAYER_ID` y `CLUB_ID` como identificadores. Utilizamos `VALUATION_DATE` para realizar la separación temporal, pero no como entrada directa del modelo. Tampoco incluimos ninguna valoración futura entre las características predictoras.
 
-### Paso 2: decide cómo dividir (5 minutos)
+### Paso 3: decide cómo dividir (5 minutos)
 
-¿Tu modelo predice el futuro a partir de filas con fecha? Si sí, divide por fecha; si no, al azar. Justifica.
+¿Tu modelo predice el futuro a partir de filas con fecha? Si sí, divide por fecha dentro de `cargar_y_dividir`; si no, al azar. Justifica.
 
 Como nuestro modelo busca predecir una depreciación futura a partir de observaciones históricas, decidimos realizar una división cronológica en lugar de utilizar una separación aleatoria.
 
@@ -159,9 +167,9 @@ Además, reservamos un intervalo de 430 días antes del comienzo de prueba, ya q
 
 Obtuvimos 302.189 observaciones de entrenamiento, 90.018 de prueba y 57.871 observaciones reservadas entre ambos períodos.
 
-### Paso 3: construye y corre el pipeline (15 minutos)
+### Paso 4: corre el script (10 minutos)
 
-Completa la plantilla y córrela. Anota la forma de los conjuntos de entrenamiento y prueba ya preparados, y la lista de columnas que produce.
+Desde una terminal, en `psets/proyecto/modelado/`:
 
 Construimos un `ColumnTransformer` con tres grupos de variables. Las numéricas pasan por un pipeline de imputación por mediana y escalado, las categóricas se imputan y codifican mediante one-hot encoding, y las binarias ya preparadas se conservan directamente.
 

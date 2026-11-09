@@ -14,7 +14,7 @@ pandas y matplotlib ya vienen en el Codespace. En tu laptop, instálalos con `pi
 python3 -c "import matplotlib; print(matplotlib.__version__)"
 ```
 
-Los scripts de hoy guardan cada gráfico como imagen en una carpeta `figuras/`. Ábrelas desde el explorador de archivos de VS Code. También puedes correr el mismo código en un notebook de Jupyter (en el Codespace, crea un archivo `.ipynb` y elige el kernel de Python 3.11), donde el gráfico aparece debajo de la celda.
+Los laboratorios de hoy son notebooks de Jupyter, como el diagnóstico de la Semana 4: cada gráfico aparece debajo de la celda que lo dibuja. Una exploración se lee para decidir qué hacer con los datos; por eso va en un notebook y no en un script.
 
 ## Antes de empezar
 
@@ -237,11 +237,7 @@ ACTIVIDAD NO REALIZADA EN CLASE
 
 ## Ejercicio 2: relaciones entre variables
 
-Solo o en pareja. Archivo: [`starter/ejercicio2_relaciones.py`](./starter/ejercicio2_relaciones.py), sobre el mismo `viajes_taxi.csv`. Quita solo los errores que el Ejercicio 1 ya confirmó y completa los 5 `TODO`: dispersión de distancia contra tarifa, propina por método de pago, correlaciones con la tarifa, y pasajeros vacíos o en 0. Al final, el script imprime una comprobación por TODO: completa los 5 hasta que todas digan `OK`.
-
-```
-python3 ejercicio2_relaciones.py
-```
+Solo o en pareja. Notebook: [`starter/ejercicio2_relaciones.ipynb`](./starter/ejercicio2_relaciones.ipynb), sobre el mismo `viajes_taxi.csv`. Quita solo los errores que el Ejercicio 1 ya confirmó y completa los 5 `TODO`: dispersión de distancia contra tarifa, propina por método de pago, correlaciones con la tarifa, y pasajeros vacíos o en 0. La última celda imprime una comprobación por TODO: completa los 5 hasta que todas digan `OK`.
 
 **Hallazgo 1: qué muestra el gráfico de distancia contra tarifa, además de la tendencia general.**
 
@@ -479,7 +475,7 @@ También realizamos consultas agrupadas y correlaciones para explorar la relaci�
 
 ### Paso 3: tres hallazgos que afectarían el modelado (10 minutos)
 
-Para cada hallazgo, escribe qué encontraste, el número o el gráfico que lo confirma, y qué cambia en el modelo por su causa (una fila que quitas, una columna que no puedes usar, una variable que hay que transformar).
+En el paso 5 del notebook, para cada hallazgo: una celda de código con el número o el gráfico que lo confirma, y debajo, en la celda de texto, qué encontraste y qué cambia en el modelo por su causa (una fila que quitas, una columna que no puedes usar, una variable que hay que transformar). Antes de hacer commit, reinicia el kernel y corre todo.
 
 **Hallazgo 1:** los minutos jugados presentan una relación débil y no lineal con la depreciación.
 
